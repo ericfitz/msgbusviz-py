@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://msgbusviz.dev/schemas/protocol/v1.json",
+  "title": "msgbusviz WebSocket protocol v1",
+  "type": "object",
+  "oneOf": [
+    { "$ref": "#/$defs/Hello" },
+    { "$ref": "#/$defs/ConfigUpdated" },
+    { "$ref": "#/$defs/MessageSent" },
+    { "$ref": "#/$defs/ChannelUpdated" },
+    { "$ref": "#/$defs/ErrorMsg" },
+    { "$ref": "#/$defs/SendMessage" },
+    { "$ref": "#/$defs/UpdateChannel" },
+    { "$ref": "#/$defs/SaveConfig" }
+  ],
+  "$defs": {
+    "HexColor": {
+      "type": "string",
+      "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+    },
+    "NormalizedConfig": {
+      "type": "object",
+      "description": "The fully-normalized config produced by @msgbusviz/core. Detailed schema lives in core; this is unconstrained here for forward-compat.",
+      "additionalProperties": true
+    },
+    "Hello": {
+      "type": "object",
+      "required": ["type", "protocolVersion", "config"],
+      "properties": {
+        "type": { "const": "hello" },
+        "protocolVersion": { "type": "integer", "const": 1 },
+        "config": { "$ref": "#/$defs/NormalizedConfig" }
+      },
+      "additionalProperties": false
+    },
+    "ConfigUpdated": {
+      "type": "object",
+      "required": ["type", "config"],
+      "properties": {
+        "type": { "const": "configUpdated" },
+        "config": { "$ref": "#/$defs/NormalizedConfig" }
+      },
+      "additionalProperties": false
+    },
+    "MessageSent": {
+      "type": "object",
+      "required": ["type", "id", "channel", "from", "to", "color", "spawnedAt"],
+      "properties": {
+        "type": { "const": "messageSent" },
+        "id": { "type": "string", "minLength": 1 },
+        "channel": { "type": "string", "minLength": 1 },
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "label": { "type": "string" },
+        "color": { "$ref": "#/$defs/HexColor" },
+        "spawnedAt": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "ChannelUpdated": {
+      "type": "object",
+      "required": ["type", "channel", "patch"],
+      "properties": {
+        "type": { "const": "channelUpdated" },
+        "channel": { "type": "string", "minLength": 1 },
+        "patch": { "$ref": "#/$defs/ChannelPatch" }
+      },
+      "additionalProperties": false
+    },
+    "ChannelPatch": {
+      "type": "object",
+      "properties": {
+        "color": { "$ref": "#/$defs/HexColor" },
+        "speed": { "type": "number", "exclusiveMinimum": 0 },
+        "size": { "type": "number", "exclusiveMinimum": 0 },
+        "messageModel": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "ErrorMsg": {
+      "type": "object",
+      "required": ["type", "code", "message"],
+      "properties": {
+        "type": { "const": "error" },
+        "code": {
+          "type": "string",
+          "enum": [
+            "unknown_channel",
+            "invalid_publisher",
+            "unknown_subscriber",
+            "schema",
+            "edit_disabled",
+            "save_failed"
+          ]
+        },
+        "message": { "type": "string" },
+        "details": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": false
+    },
+    "SendMessage": {
+      "type": "object",
+      "required": ["type", "channel"],
+      "properties": {
+        "type": { "const": "sendMessage" },
+        "channel": { "type": "string", "minLength": 1 },
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "label": { "type": "string" },
+        "color": { "$ref": "#/$defs/HexColor" }
+      },
+      "additionalProperties": false
+    },
+    "UpdateChannel": {
+      "type": "object",
+      "required": ["type", "channel", "patch"],
+      "properties": {
+        "type": { "const": "updateChannel" },
+        "channel": { "type": "string", "minLength": 1 },
+        "patch": { "$ref": "#/$defs/ChannelPatch" }
+      },
+      "additionalProperties": false
+    },
+    "SaveConfig": {
+      "type": "object",
+      "required": ["type", "config"],
+      "properties": {
+        "type": { "const": "saveConfig" },
+        "config": { "$ref": "#/$defs/NormalizedConfig" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
