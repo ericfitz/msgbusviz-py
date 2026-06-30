@@ -29,6 +29,7 @@ class Client:
 
         self._loop: asyncio.AbstractEventLoop | None = None
         self._thread: threading.Thread | None = None
+        self._main_task: asyncio.Task | None = None
         self._ready = threading.Event()
         self._closed = threading.Event()
         self._connected = threading.Event()
@@ -49,9 +50,13 @@ class Client:
     def close(self) -> None:
         self._closed.set()
         if self._loop and self._loop.is_running():
-            self._loop.call_soon_threadsafe(self._loop.stop)
+            self._loop.call_soon_threadsafe(self._cancel_main)
         if self._thread:
             self._thread.join(timeout=2.0)
+
+    def _cancel_main(self) -> None:
+        if self._main_task is not None and not self._main_task.done():
+            self._main_task.cancel()
 
     def send_message(
         self,
@@ -114,13 +119,31 @@ class Client:
         self._loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self._loop)
         try:
-            self._loop.run_until_complete(self._main())
+            self._main_task = self._loop.create_task(self._main())
+            self._loop.run_until_complete(self._main_task)
+        except asyncio.CancelledError:
+            pass
         except Exception as err:
             self._connect_error = err
             self.on_error(err)
         finally:
+            self._drain_pending()
             self._ready.set()
             self._loop.close()
+
+    def _drain_pending(self) -> None:
+        # Cancel and await any tasks still pending (e.g. the websockets
+        # keepalive task) so the loop closes cleanly without "Task was
+        # destroyed but it is pending" or unraisable-generator warnings.
+        assert self._loop is not None
+        pending = [t for t in asyncio.all_tasks(self._loop) if not t.done()]
+        for task in pending:
+            task.cancel()
+        if pending:
+            self._loop.run_until_complete(
+                asyncio.gather(*pending, return_exceptions=True)
+            )
+        self._loop.run_until_complete(self._loop.shutdown_asyncgens())
 
     async def _main(self) -> None:
         backoff = 0.25
