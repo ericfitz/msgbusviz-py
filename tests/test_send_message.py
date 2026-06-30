@@ -4,7 +4,6 @@ import time
 from contextlib import contextmanager
 
 import pytest
-import websockets
 from websockets.sync.server import serve
 
 from msgbusviz import Client

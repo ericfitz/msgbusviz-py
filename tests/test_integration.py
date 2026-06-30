@@ -1,14 +1,10 @@
-import json
 import os
-import shutil
 import subprocess
 import time
 from pathlib import Path
 import urllib.request
 
 import pytest
-
-from msgbusviz import Client
 
 CONFIG_YAML = """
 version: 1
@@ -41,13 +37,15 @@ def sidecar(tmp_path: Path):
     while time.time() < deadline:
         line = proc.stdout.readline()
         if not line:
-            time.sleep(0.01); continue
+            time.sleep(0.01)
+            continue
         if "listening on" in line:
             raw = line.rsplit(":", 1)[-1].strip().rstrip('"}').strip()
             port = int(raw)
             break
     if port is None:
-        proc.kill(); pytest.fail("sidecar didn't print listening line")
+        proc.kill()
+        pytest.fail("sidecar didn't print listening line")
 
     for _ in range(50):
         try:

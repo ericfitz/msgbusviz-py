@@ -34,10 +34,14 @@ class AsyncClient:
         color: Optional[str] = None,
     ) -> None:
         msg: dict[str, Any] = {"type": "sendMessage", "channel": channel}
-        if from_ is not None: msg["from"] = from_
-        if to    is not None: msg["to"] = to
-        if label is not None: msg["label"] = label
-        if color is not None: msg["color"] = color
+        if from_ is not None:
+            msg["from"] = from_
+        if to is not None:
+            msg["to"] = to
+        if label is not None:
+            msg["label"] = label
+        if color is not None:
+            msg["color"] = color
         ok, errs = validate_message(msg)
         if not ok:
             raise ValueError(f"invalid message: {errs}")

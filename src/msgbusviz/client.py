@@ -63,10 +63,14 @@ class Client:
         color: Optional[str] = None,
     ) -> None:
         msg: dict[str, Any] = {"type": "sendMessage", "channel": channel}
-        if from_ is not None: msg["from"] = from_
-        if to    is not None: msg["to"] = to
-        if label is not None: msg["label"] = label
-        if color is not None: msg["color"] = color
+        if from_ is not None:
+            msg["from"] = from_
+        if to is not None:
+            msg["to"] = to
+        if label is not None:
+            msg["label"] = label
+        if color is not None:
+            msg["color"] = color
         self._enqueue(msg)
 
     def update_channel(
@@ -79,10 +83,14 @@ class Client:
         message_model: Optional[str] = None,
     ) -> None:
         patch: dict[str, Any] = {}
-        if color is not None:         patch["color"] = color
-        if speed is not None:         patch["speed"] = speed
-        if size  is not None:         patch["size"] = size
-        if message_model is not None: patch["messageModel"] = message_model
+        if color is not None:
+            patch["color"] = color
+        if speed is not None:
+            patch["speed"] = speed
+        if size is not None:
+            patch["size"] = size
+        if message_model is not None:
+            patch["messageModel"] = message_model
         if not patch:
             raise ValueError("update_channel requires at least one field")
         self._enqueue({"type": "updateChannel", "channel": channel, "patch": patch})
