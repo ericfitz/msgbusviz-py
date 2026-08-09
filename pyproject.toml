@@ -11,7 +11,7 @@ dependencies = [
 license = { text = "MIT" }
 
 [project.optional-dependencies]
-dev = ["pytest>=9.0", "pytest-asyncio>=1.3"]
+dev = ["pytest>=9.0", "pytest-asyncio>=1.3", "ruff>=0.16.2"]
 
 [build-system]
 requires = ["hatchling"]
@@ -19,3 +19,36 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/msgbusviz"]
+
+[tool.ruff]
+# Pinned explicitly so the lint gate does not drift with ruff's default
+# ruleset, which is what silently re-broke a previously clean tree.
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+  "E",     # pycodestyle errors
+  "W",     # pycodestyle warnings
+  "F",     # pyflakes
+  "I",     # isort
+  "UP",    # pyupgrade
+  "B",     # flake8-bugbear
+  "BLE",   # flake8-blind-except
+  "C4",    # flake8-comprehensions
+  "SIM",   # flake8-simplify
+  "PT",    # flake8-pytest-style
+  "RUF",   # ruff-specific
+  "ASYNC", # flake8-async -- this package is an asyncio client
+  "LOG",   # flake8-logging
+  "RET",   # flake8-return
+  "PIE",   # flake8-pie
+  "DTZ",   # flake8-datetimez
+  "FURB",  # refurb
+]
+# Deliberately not selected:
+#   PERF -- PERF401 misfires on the streaming `received.append` in the
+#           test fake-server handler; the test polls that list while it
+#           fills, so a comprehension would block and break it.
+#   TRY  -- TRY003 objects to the f-string diagnostics this package
+#           raises on purpose (protocol mismatch, invalid message).
