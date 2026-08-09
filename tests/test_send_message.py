@@ -6,7 +6,7 @@ from contextlib import contextmanager
 import pytest
 from websockets.sync.server import serve
 
-from msgbusviz import Client
+from msgbusviz import Client, ClientError
 
 
 @contextmanager
@@ -50,6 +50,6 @@ def test_invalid_send_message_raises():
     with fake_server(received) as url:
         c = Client(url=url, reconnect=False)
         c.connect(timeout=2.0)
-        with pytest.raises(Exception):
+        with pytest.raises(ClientError, match="invalid message"):
             c.send_message("orders", color="lime")
         c.close()

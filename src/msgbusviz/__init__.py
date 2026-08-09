@@ -1,5 +1,5 @@
-__version__ = "0.1.0"
-from .client import Client, ClientError
+__version__ = "0.2.0"
 from ._async_client import AsyncClient
+from .client import Client, ClientError
 
-__all__ = ["Client", "ClientError", "AsyncClient"]
+__all__ = ["AsyncClient", "Client", "ClientError"]

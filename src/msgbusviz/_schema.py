@@ -1,5 +1,6 @@
 import json
 from importlib.resources import files
+
 from jsonschema import Draft202012Validator
 
 _SCHEMA_PATH = files(__package__) / "_protocol.schema.json"
