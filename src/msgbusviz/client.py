@@ -157,7 +157,10 @@ class Client:
                     self._ws = ws
                     hello_raw = await ws.recv()
                     hello = json.loads(hello_raw)
-                    if hello.get("type") != "hello" or hello.get("protocolVersion") != PROTOCOL_VERSION:
+                    if (
+                        hello.get("type") != "hello"
+                        or hello.get("protocolVersion") != PROTOCOL_VERSION
+                    ):
                         raise ClientError(f"protocol mismatch: {hello}")
                     self._connected.set()
                     self._ready.set()
