@@ -3,9 +3,9 @@ name = "msgbusviz"
 version = "0.1.0"
 description = "Python client for msgbusviz — 3D visualization of messages flowing between nodes."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-  "websockets>=16.0",
+  "websockets>=17.0",
   "jsonschema>=4.26",
 ]
 license = { text = "MIT" }
