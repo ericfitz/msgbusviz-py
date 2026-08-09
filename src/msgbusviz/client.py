@@ -2,7 +2,8 @@ import asyncio
 import json
 import threading
 from collections import deque
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import websockets
 
@@ -20,7 +21,7 @@ class Client:
         *,
         reconnect: bool = True,
         max_queue: int = 1000,
-        on_error: Optional[Callable[[Exception], None]] = None,
+        on_error: Callable[[Exception], None] | None = None,
     ) -> None:
         self.url = url
         self.reconnect = reconnect
@@ -62,10 +63,10 @@ class Client:
         self,
         channel: str,
         *,
-        from_: Optional[str] = None,
-        to: Optional[str] = None,
-        label: Optional[str] = None,
-        color: Optional[str] = None,
+        from_: str | None = None,
+        to: str | None = None,
+        label: str | None = None,
+        color: str | None = None,
     ) -> None:
         msg: dict[str, Any] = {"type": "sendMessage", "channel": channel}
         if from_ is not None:
@@ -82,10 +83,10 @@ class Client:
         self,
         channel: str,
         *,
-        color: Optional[str] = None,
-        speed: Optional[float] = None,
-        size: Optional[float] = None,
-        message_model: Optional[str] = None,
+        color: str | None = None,
+        speed: float | None = None,
+        size: float | None = None,
+        message_model: str | None = None,
     ) -> None:
         patch: dict[str, Any] = {}
         if color is not None:
@@ -123,7 +124,10 @@ class Client:
             self._loop.run_until_complete(self._main_task)
         except asyncio.CancelledError:
             pass
-        except Exception as err:
+        # Deliberate catch-all: this is the background thread's top-level
+        # boundary. Any failure must be captured so connect() can re-raise
+        # it on the caller's thread rather than dying silently here.
+        except Exception as err:  # noqa: BLE001
             self._connect_error = err
             self.on_error(err)
         finally:
@@ -159,7 +163,9 @@ class Client:
                     self._ready.set()
                     backoff = 0.25
                     await asyncio.gather(self._sender(ws), self._reader(ws))
-            except Exception as err:
+            # Deliberate catch-all: the reconnect loop must survive any
+            # transport or protocol failure in order to retry with backoff.
+            except Exception as err:  # noqa: BLE001
                 self._connected.clear()
                 self._ws = None
                 self.on_error(err)
@@ -184,7 +190,7 @@ class Client:
         async for raw in ws:
             try:
                 obj = json.loads(raw)
-            except Exception as err:
+            except (ValueError, TypeError) as err:
                 self.on_error(err)
                 continue
             if obj.get("type") == "error":

@@ -1,10 +1,12 @@
 import os
 import subprocess
 import time
-from pathlib import Path
 import urllib.request
+from pathlib import Path
 
 import pytest
+
+from msgbusviz import Client
 
 CONFIG_YAML = """
 version: 1
@@ -52,7 +54,9 @@ def sidecar(tmp_path: Path):
             with urllib.request.urlopen(f"http://127.0.0.1:{port}/healthz") as r:
                 if r.status == 200:
                     break
-        except Exception:
+        except OSError:
+            # URLError/HTTPError both subclass OSError; the server may not
+            # be accepting connections yet, so keep polling.
             time.sleep(0.05)
 
     yield f"ws://127.0.0.1:{port}/ws"
@@ -60,4 +64,21 @@ def sidecar(tmp_path: Path):
 
 
 def test_python_client_against_node_sidecar(sidecar):
-    pytest.skip("requires websocket-client; baseline test_send_message_round_trip already covers protocol")
+    """The Python client completes a real handshake with the Node server.
+
+    Client.connect() only returns once the server's `hello` frame has been
+    received and its protocolVersion matches PROTOCOL_VERSION, so a clean
+    connect is itself the cross-implementation protocol assertion.
+    """
+    errors: list[Exception] = []
+    c = Client(url=sidecar, reconnect=False, on_error=errors.append)
+    c.connect(timeout=5.0)
+    try:
+        c.send_message("evt", from_="Pub", to="Sub", label="hello")
+        # Give the sender coroutine a moment to flush and the server a
+        # chance to reject the frame if it dislikes it.
+        time.sleep(0.5)
+    finally:
+        c.close()
+
+    assert not errors, f"client reported errors against the sidecar: {errors}"

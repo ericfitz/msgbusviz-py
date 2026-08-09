@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Any, Optional
+from typing import Any
 
 import websockets
 
@@ -28,10 +28,10 @@ class AsyncClient:
         self,
         channel: str,
         *,
-        from_: Optional[str] = None,
-        to: Optional[str] = None,
-        label: Optional[str] = None,
-        color: Optional[str] = None,
+        from_: str | None = None,
+        to: str | None = None,
+        label: str | None = None,
+        color: str | None = None,
     ) -> None:
         msg: dict[str, Any] = {"type": "sendMessage", "channel": channel}
         if from_ is not None:
